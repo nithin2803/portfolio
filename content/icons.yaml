@@ -1,0 +1,111 @@
+# Icons for names in the chat and the blog: the first mention of each name in a chat reply (or a blog post)
+# renders with its icon. Names match whole words, exact case. See content/chat/README.md.
+#
+# After editing, run `bun run icons` (offline, regenerates src/lib/glossary.generated.json).
+# To find new names worth an icon after adding content, run `bun run icons --suggest` and review the diff.
+#
+# A term is an emoji, or an object with one of:
+#   brand: thesvg slug (https://thesvg.org)   variant: a thesvg variant (e.g. mono)   color: true keeps the
+#          logo's own colours (automatic for logos with several; one-colour logos take that colour, or white
+#          when it's too dark for the page)   mono: true draws a one-colour logo in the text colour instead
+#   image: file in public/assets/logos, with width/height (logos are trimmed to 128px tall)
+#   map: a place to search on Google Maps (icon + link)
+#   favicon: a host whose favicon is the icon instead (no link)
+#   emoji: an emoji (same as the short form)
+#   nmark: true (the site's own N, for things that are part of the site)
+# plus optional href (link the name; brand names aren't linked by default), aliases, sites (links to these
+# hosts show this icon instead of their favicon, so GitHub looks the same as a name and as a link),
+# id (defaults to the name in kebab-case), and auto: false (also an ordinary word: only where marked).
+#
+# The one marker, the same in chat content, blog posts and the chat model's replies:
+#   [Go](@go)    this mention gets term `go`'s icon (how auto: false names get one; --suggest writes these)
+#   [Sure](@-)   this mention stays plain
+
+suggested: 79e604013c5fe7c6
+
+terms:
+  Amazon: { image: amazon-smile.png, width: 119, sites: [amazon.com, amazon.jobs, aboutamazon.com] }
+  Alexa: { image: alexa-a.png, width: 160, sites: [alexa.com, alexa.amazon.com] }
+  UW: { image: uw-w.png, width: 190, aliases: [University of Washington], sites: [uw.edu, washington.edu] }
+  GitHub: { brand: github, sites: [github.com] }
+  LinkedIn: { brand: linkedin, mono: true, sites: [linkedin.com] }
+  X: { brand: x, auto: false, sites: [x.com, twitter.com] }
+  YouTube: { brand: youtube, sites: [youtube.com, youtu.be] }
+  Next.js: { id: nextjs, brand: nextdotjs, variant: mono, sites: [nextjs.org] }
+  Claude: { brand: claude, color: true, sites: [claude.ai, claude.com] }
+  Anthropic: { brand: anthropic, sites: [anthropic.com] }
+  GLM-5.3 Flash: { id: glm, brand: zdotai, sites: [z.ai] }
+  nythos-6: { nmark: true }
+
+  CSS: { brand: css }
+  Go: { brand: go, auto: false }
+
+  # proposed by `bun run icons --suggest` on 2026-10-21: keep, edit, or move to ignore
+  Y Combinator: { brand: y-combinator }
+  WebGL: { brand: webgl }
+  Tailwind: { brand: tailwindcss }
+  three.js: { brand: threedotjs }
+  iPhone 16 Pro: { brand: apple }
+  Rufus: { image: amazon-smile.png, width: 119 }
+  Seattle: 🌲
+  Bellevue: 🏙️
+  Hyderabad: 🕌
+  India: 🇮🇳
+  SF: 🌉
+  Fjaðrárgljúfur: { map: 'Fjaðrárgljúfur, Iceland' }
+  Iceland: 🇮🇸
+  Mount Rainier National Park: { map: 'Mount Rainier National Park, Washington' }
+  Mailbox Peak: { map: 'Mailbox Peak Trail, Washington' }
+  Snow Lake: { map: 'Snow Lake Trail, Washington' }
+  glacier hiking: 🧗
+  Icelandic horses: 🐴
+  Patagonia: { map: Patagonia }
+  Machu Picchu: { map: 'Machu Picchu, Peru' }
+  coffee: ☕
+
+  # proposed by `bun run icons --suggest` on 2026-10-21: keep, edit, or move to ignore
+
+  # proposed by `bun run icons --suggest` on 2026-10-21: keep, edit, or move to ignore
+  TypeScript: { brand: typescript }
+  JavaScript: { brand: javascript }
+  AWS: { brand: aws }
+  Amazon Bedrock: { brand: aws-amazon-bedrock }
+  Playwright: { brand: playwright }
+  Codex: { brand: codex }
+  Stripe: { favicon: stripe.com }
+  Claude Code: { brand: claude-code }
+  HTML: { brand: html5 }
+  Claude-in-Chrome: { brand: chrome }
+
+# every other link shows the favicon of the site it points to, fetched through /api/favicon (nothing is
+# saved). These borrow another site's instead: a host (subdomains included) or host/path, longest match first.
+favicons: { google.com/maps: maps.google.com, maps.app.goo.gl: maps.google.com }
+
+# names you've decided stay plain: --suggest never asks about them
+ignore: [Paxos, RAG]
+
+# names --suggest judged ordinary words where they appear, with how many plain mentions it saw: it asks again
+# when that count changes (move one to ignore to stop that, or to terms to give it an icon)
+skipped:
+  {
+    act: 2,
+    AI: 4,
+    Canvas: 1,
+    character: 2,
+    Code: 1,
+    Commit: 1,
+    Exact: 1,
+    Go: 1,
+    Images: 1,
+    job: 1,
+    MCP: 1,
+    ML: 1,
+    Neon: 1,
+    Power: 1,
+    role: 1,
+    Router: 1,
+    Search: 2,
+    sharp: 1,
+    Squash: 1,
+    Sure: 1,
+  }
