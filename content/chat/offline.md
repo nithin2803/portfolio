@@ -1,0 +1,7 @@
+---
+question: ''
+describe: "Shown when the model isn't connected (no API key configured)."
+followUps: [contact]
+---
+
+nythos-6 isn’t switched on yet. In the meantime, [say hi](/#contact) directly.
