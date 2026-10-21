@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+@import '../styles/tokens.css';
+@import '../styles/effects.css';
+
+@layer base {
+  /* wide decorations (the prism light behind the chat) are clipped at the body, so the page can't
+     be scrolled sideways at all; hidden on its own only hides the scrollbar, and focusing something
+     or find-in-page could still shift the page */
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+  body {
+    @apply bg-black font-sans text-fg antialiased;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-signal-violet) 60%, transparent);
+    color: var(--color-white);
+  }
+  /* for anything that doesn't style its own focus */
+  :focus-visible {
+    outline: 1px solid var(--color-signal-blue);
+    outline-offset: 3px;
+  }
+}

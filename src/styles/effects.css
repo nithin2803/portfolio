@@ -1,0 +1,210 @@
+@utility bracket-frame {
+  position: relative;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    border: 1px solid var(--color-line-strong);
+  }
+  &::before {
+    top: -1px;
+    left: -1px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  &::after {
+    right: -1px;
+    bottom: -1px;
+    border-top: 0;
+    border-left: 0;
+  }
+}
+
+@utility keycap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid rgb(232 236 245 / 0.3);
+  border-radius: 3px;
+  box-shadow: 0 2px 0 rgb(232 236 245 / 0.15);
+  /* set in full here, so a keycap looks the same wherever it sits instead of inheriting its
+     surroundings' weight and case */
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--text-small--letter-spacing);
+  text-transform: uppercase;
+  /* every keycap presses when clicked, so every one shows the pointer, in a button or not */
+  cursor: pointer;
+  color: rgb(232 236 245 / 0.9);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+  &:active,
+  &.is-pressed {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 rgb(232 236 245 / 0.15);
+  }
+}
+
+@utility glass-panel {
+  background: var(--color-glass);
+  border: 1px solid var(--color-line);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+@utility scramble-ghost {
+  color: var(--color-fg-ghost);
+}
+
+@utility stream-token {
+  position: relative;
+  animation: var(--animate-token-in);
+  &[data-caret]::after {
+    content: '';
+    position: absolute;
+    left: calc(100% + 0.15em);
+    top: 0.22em;
+    width: 0.45em;
+    height: 1.1em;
+    background: var(--color-fringe-b);
+    animation: var(--animate-blink);
+  }
+}
+
+/* fine white grain, faint enough to only break up banding in dark gradients */
+:root {
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+}
+
+/* a soft wash of the signal colours from the top-right corner: brightest in the corner itself, fading
+   out across the page, with the grain only where it's lit */
+@utility corner-glow {
+  pointer-events: none;
+  background:
+    radial-gradient(
+      in oklab 40% 50% at 100% 0%,
+      color-mix(in oklab, var(--color-signal-violet) 26%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      in oklab 95% 80% at 85% 0%,
+      color-mix(in oklab, var(--color-signal-blue) 18%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      in oklab 35% 60% at 100% 50%,
+      color-mix(in oklab, var(--color-signal-red) 26%, transparent),
+      transparent
+    );
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--grain);
+    mask-image: radial-gradient(70% 100% at 100% 0%, #000, transparent);
+  }
+}
+
+/* light split by a prism, fanning down from behind the top of the About chat: the signal colours
+   spread by angle, strongest just below the source (the source point itself stays hidden). Set
+   --prism-at to move it. */
+@utility prism-light {
+  --prism-at: 50% 0%;
+  pointer-events: none;
+  isolation: isolate;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%);
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  /* the spread, centred on straight down (180deg) */
+  &::before {
+    /* only the signal colours, with the blends between neighbours as their own bands; no ice,
+       which is pale enough to read as grey haze this faint */
+    background: conic-gradient(
+      from 115deg at var(--prism-at) in oklab,
+      transparent 0deg,
+      color-mix(in oklab, var(--color-signal-blue) 28%, transparent) 14deg,
+      color-mix(in oklab, var(--color-signal-blue) 40%, transparent) 28deg,
+      color-mix(in oklab, var(--color-signal-blue) 52%, transparent) 40deg,
+      color-mix(
+          in oklab,
+          color-mix(in oklab, var(--color-signal-blue) 75%, var(--color-signal-violet)) 58%,
+          transparent
+        )
+        54deg,
+      color-mix(
+          in oklab,
+          color-mix(in oklab, var(--color-signal-blue) 50%, var(--color-signal-violet)) 62%,
+          transparent
+        )
+        68deg,
+      color-mix(in oklab, var(--color-signal-violet) 64%, transparent) 82deg,
+      color-mix(
+          in oklab,
+          color-mix(in oklab, var(--color-signal-violet) 50%, var(--color-signal-red)) 58%,
+          transparent
+        )
+        96deg,
+      color-mix(in oklab, var(--color-signal-red) 48%, transparent) 110deg,
+      transparent 130deg
+    );
+    filter: blur(16px);
+    opacity: 0.7;
+    /* clear at the source, full just below it, then fading out: the fan's shape without its point */
+    mask-image: radial-gradient(
+      120% 100% at var(--prism-at),
+      transparent 0%,
+      #000 14%,
+      rgb(0 0 0 / 0.65) 45%,
+      transparent 90%
+    );
+  }
+  /* grain, only inside the beam, so the long dark falloff doesn't band */
+  &::after {
+    background: var(--grain);
+    mask-image:
+      conic-gradient(
+        from 115deg at var(--prism-at),
+        transparent 0deg,
+        #000 25deg,
+        #000 108deg,
+        transparent 130deg
+      ),
+      radial-gradient(110% 95% at var(--prism-at), transparent 0%, #000 14%, transparent 78%);
+    mask-composite: intersect;
+  }
+}
+
+@utility ghost-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-fg) 4%, transparent);
+  padding: 0.25rem 0.625rem;
+  color: var(--color-fg-muted);
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+  &:hover {
+    border-color: color-mix(in oklab, var(--color-fringe-b) 60%, transparent);
+    background: color-mix(in oklab, var(--color-fringe-b) 10%, transparent);
+    color: var(--color-white);
+  }
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}

@@ -1,0 +1,4 @@
+# written by `bun run icons`
+src/lib/glossary.generated.json
+# MDX comments ({/* */}) get mangled
+content/blog/*.mdx
