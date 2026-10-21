@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<p align="center">
+  <img src="docs/n-glyph.png" alt="The site's 3D N, drawn as a matrix of dots with a red and blue chromatic split" width="300">
+</p>
 
-## Getting Started
+<h1 align="center">Nithin's Portfolio</h1>
 
-First, run the development server:
+<p align="center">
+  The personal site of Nithin, a software engineer in Seattle.
+</p>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+- **The N.** A 3D letter rendered as a dot matrix that glitches, scatters into a tornado when you click it, and
+  turns as you drag. Press <kbd>Space</kbd> for its telemetry.
+- **Ask me anything.** The About section is a chat that answers as me, from answers I wrote, next to live
+  panels for the model behind it: its activations, its KV cache, its speed.
+- **Blog.** Notes on whatever I'm figuring out, with a hover preview of every page it links to.
+- **Contact.** Seattle at night in pixel art, seen from Kerry Park. Press <kbd>Space</kbd> there for a game.
+
+## Built with
+
+Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Three.js · MDX, run with [bun](https://bun.sh). The chat
+streams GLM-5.3 Flash through OpenRouter.
+
+```sh
+bun install
+bun run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Set `OPENROUTER_API_KEY` in `.env.local` to turn the chat on (see `.env.example`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Find your way around
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): the map and the rules that hold everywhere
+- [content/blog](content/blog/README.md): writing a post
+- [content/chat](content/chat/README.md): what the chat knows
