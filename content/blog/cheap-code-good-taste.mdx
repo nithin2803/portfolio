@@ -1,0 +1,55 @@
+export const meta = {
+  title: 'Cheap Code, Good Taste',
+  date: '2026-10-21',
+  summary:
+    'Lessons from building my personal portfolio with AI agents',
+  tags: ['Web Development', 'AI Coding', 'Design'],
+  draft: false,
+};
+
+As a developer, having a personal portfolio is a great way to showcase your technical skills, talk about your projects, and tell your story the way a resumé or cover letter can't quite capture. Whether you're applying for jobs or building a personal brand, a portfolio can really set you apart. I wanted to take up the challenge of building my own portfolio — as a way to show what I’ve built, and to have a home for the ideas I haven’t figured out yet. In this article, I'll walk you through my thought process and approach on how I effectively used AI to achieve my vision. 
+
+I wanted the website itself to be the portfolio piece. I've always admired thoughtfully designed products, and this was my chance to see if I could build one. I wanted it to reflect how I build things: technical without taking itself too seriously. 
+
+A few weeks ago, I came across [this post on X](https://x.com/zzzzshawn/status/2110320636237414435) sharing [Directoryyy](https://directoryyy.com/), a curated collection of personal portfolios (shoutout to @zzzzshawn for putting it together). It was exactly the kind of inspiration I was looking for. But even after scrolling through dozens of great sites, I still didn’t know what I wanted mine to look like. Which brings me to the first lesson on how I use agents.
+### Use Claude like a Monte Carlo Tree Search
+If you haven’t heard of Monte Carlo methods, they’re built on a simple idea: when something’s too hard to figure out directly, sample it a bunch of times and see what comes back. Monte Carlo tree search, the approach behind AlphaGo, adds a twist. It spreads its samples out at first (explore), then focuses on whatever looks promising (exploit). Since each sample is cheap, it can afford to take a lot of them. 
+
+> If you're curious, here's a [great video on Monte Carlo simulation](https://www.youtube.com/watch?v=8OvvhABoYkI)
+
+The beautiful thing about agents like Claude Code are how easy they make it to sample coding! When a working prototype takes minutes instead of days, why not try and build as many as possible? That's how I approached this design. 
+
+I first had Claude build me a full working replica of [Maxime Heckel's website](https://maximeheckel.com/), less of a boring portfolio and more of a work of art showcasing his amazing work with GPU shaders. I kept it vanilla: HTML, CSS, and JavaScript. But more importantly, I gave it access to Claude-in-Chrome, Anthropic's own browser extension that lets Claude play with what it's building — more on this later. 30 short minutes later and I had my own version that I could iterate on. 
+
+As I tried to hone in on a design direction, I had Claude build me dials for virtually every part of the site, from the three.js animation in the hero to different types of shaders (I'd never written a shader before). Playing around with all of these is what helped me understand what I even wanted. It's also far more effective than trying to describe a visual concept to an agent and have it get it right on its first try. I finally landed on a retro, arcade-style concept — with glitch effects, halftone, and old-school CRT display-tech — as the design motif throughout the website.
+
+Now it was time to build the damn thing, and I knew the prototype wouldn't cut it. Plain HTML doesn't let you reuse components which means duplicate code, the kind that makes me want to vomit. That’s fine for a quick prototype. But for a site I’d keep adding to, with a blog on the way? Yeah, no thanks. Which brings me to lesson number two.
+### Give Claude the Structure to Build On
+With coding agents, frameworks vs. plain HTML/CSS/JS has become a real debate. On one hand, as we talked about, code is cheap now, so a lot of what frameworks save you matters less. HTML is the language of the web, the thing everything else compiles down to. So why not let agents write in their native tongue, free from the constraints and opinions frameworks impose? On the other hand, frameworks give you structure. Without them, agents tend to invent their own, and you end up with a half-baked version of the (millionth) JavaScript framework anyway. I'm with the second camp: give agents structure.
+
+Structure gives agents something to build on, so they’re not reinventing the basics every time. And this isn't just true for web development. I see the same thing at my day job, working on backend infrastructure at Amazon. When a codebase has clear patterns to follow, agents do great. When it doesn't, they turn a mess into a bigger mess a.k.a slop. 
+
+I was pretty prescriptive. I told Claude to use Next.js and Tailwind, and to break everything into small, reusable components. I also asked it to keep things lean: no extra libraries unless we actually needed them, and no clever abstractions for problems I didn’t have yet. Left to its own devices, Claude will happily pull in three packages to do something a few lines of code could handle. Being upfront about what I wanted saved me a lot of cleanup later. 
+
+> I did need Claude to use three.js and WebGL for some parts of the site, but this was only after explicitly allowlisting these technologies. 
+
+This gave me a fully functional site, in three days, that I was proud of. 12k lines of TypeScript feature code that would have been impossible, or at least extremely difficult, for me to build by hand so quickly. Did I read every one of those lines? No. I reviewed the plan, the directory structure, and the parts that actually mattered, like the agent’s server code and anything touching the API. The rest I skimmed. What let me trust it wasn’t reading every line. It was knowing everything had been checked. Which brings me to the third, and most important, lesson of them all.
+### Verify verify verify
+There's a great principle in software development called shift left. Essentially, move testing, quality checks, and security reviews earlier in your software lifecycle rather than waiting till the very end. Shift left fosters a significantly better developer experience, and thereby a much more productive agent experience. This isn’t a new idea in agentic engineering, but what really made it click for me was a Principals of Amazon (POA) talk I attended last year by Anthony Liguori, a VP and Distinguished Engineer at AWS. 
+
+His team rebuilt part of the Amazon Bedrock inference engine with just six engineers in 76 days, a project that was originally scoped for 30 engineers and 12 to 18 months. The talk is internal only but the team wrote a detailed [case study here](https://kiro.dev/case-studies/bedrock/). His biggest piece of advice? Invest in the dev/test cycle first. If you can write, test, and push a change to production with 99% confidence from your desktop, AI will make you extremely successful. If you can’t, fix that before anything else. 
+
+This is pretty easy for web development. Give your agent access to a browser for it to test its changes locally (Claude-in-Chrome, Playwright MCP, etc.), and have it dogfood what it's building. Run that in a loop and you’re most of the way there. Have it write unit tests for the tricky business logic and you’re even closer. Then run a second, adversarial review, ideally with a different model family (I use Codex), and you can get close to that 99% confidence.
+
+It’s trickier on the backend, but that’s also where it matters most. Real integration tests, end-to-end tests, and load tests, all runnable by an agent without a human in the loop. Your APIs should be easy to call too, so the agent can poke at what it built the same way it would click around a web page (with the right security guardrails, of course). If testing is slow or painful, the agent will do less of it, and you’re back to finding problems at the end. 
+
+Stripe wrote a great blog post on this in [their approach to one-shot coding agents](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents-part-2). One detail that stuck with me is that there’s a balancing act here. Give an agent unlimited retries to solve something and it’ll burn tokens, and after a few rounds it usually starts flailing instead of making progress. You should cap it at one or two attempts and it either gets it right, or you step back and rethink the approach. 
+
+> `/clear` has become my new best friend :)
+### Conclusion
+So that's how I built this site. Sample a lot when you're not sure, give your agent structure, and make it easy for it to check its own work. None of these ideas are new. They’re just good engineering, and agents make them matter more, not less. 
+
+I have a lot more coming: more blog posts as I dive into the worlds of inference engineering and RL, and probably more features for the portfolio. If you've made it this far, try pressing <kbd>SPACE</kbd> on the contact section for a fun treat. And if you're curious enough to see the code, it's all publicly available on my [GitHub](https://www.github.com/nithin2803). Feel free to reach out with any questions, comments, or bugs you want to file. 
+
+Happy ~~Vibe Coding~~ Agentic Engineering!\
+Nithin
