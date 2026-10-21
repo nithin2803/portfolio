@@ -1,0 +1,36 @@
+export const CONTACT = {
+  heading: 'Contact me',
+  skylineAlt: 'Pixel-art Seattle at night from Kerry Park, with the Space Needle and downtown',
+  links: ['Resume', 'LinkedIn', 'GitHub'],
+  send: 'Send me an email',
+  copy: 'Copy',
+  copyEmail: 'Copy email address',
+  copied: 'Copied',
+  hint: { before: 'Press', key: 'SPACE', after: 'to Play' },
+} as const;
+
+export const GAME = {
+  label: 'Asteroids. Arrow keys or WASD to fly, space to fire, escape to exit.',
+  best: 'Best',
+  wave: 'Wave',
+  over: 'Game Over',
+  score: 'Score',
+  lives: 'Lives',
+  help: 'for Help',
+  card: {
+    title: 'How to Play',
+    controls: 'Controls',
+    points: 'Points',
+    powers: 'Power-Ups',
+    or: 'or',
+    turn: 'Turn',
+    thrust: 'Thrust',
+    fire: 'Fire',
+    help: 'Help',
+    exit: 'Exit',
+    start: 'to Start',
+    resume: 'to Resume',
+  },
+  restart: 'to Play Again',
+  exit: 'to Exit',
+} as const;

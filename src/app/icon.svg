@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- the Asteroids ship (features/contact/asteroids/sprites.ts SHIP_HULL), nose up and to the right like the paper plane it launches from -->
+  <rect width="64" height="64" rx="14" fill="#000"/>
+  <g transform="translate(32 32) scale(20) translate(0.08 0.05) rotate(-45)">
+    <polygon points="1.15,0 0.55,-0.18 0.1,-0.3 -0.35,-0.95 -0.62,-0.95 -0.5,-0.38 -0.78,-0.3 -0.78,0.3 -0.5,0.38 -0.62,0.95 -0.35,0.95 0.1,0.3 0.55,0.18" fill="#f2f4f9" stroke="#f2f4f9" stroke-width="0.06" stroke-linejoin="round"/>
+    <polygon points="0.62,0 0.22,-0.12 0.22,0.12" fill="#000"/>
+  </g>
+</svg>
