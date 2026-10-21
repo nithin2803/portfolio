@@ -1,3 +1,9 @@
+import { Hero } from '@/features/hero';
+
 export default function HomePage() {
-  return <main />;
+  return (
+    <main>
+      <Hero />
+    </main>
+  );
 }
