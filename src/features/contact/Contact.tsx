@@ -16,7 +16,7 @@ export function Contact() {
     <section
       id="contact"
       aria-labelledby="contact-heading"
-      className="relative h-svh min-h-[34rem] overflow-hidden"
+      className="relative h-svh min-h-136 overflow-hidden"
     >
       <PixelSkyline
         id={SKYLINE_ANCHOR_ID}
@@ -42,7 +42,7 @@ export function Contact() {
               {/* where the game's ship launches from and lands back into */}
               <PaperPlaneIcon
                 id={SHIP_ANCHOR_ID}
-                className="ml-[0.35em] size-[0.62em] align-[-0.04em] transition-[translate,opacity] duration-300 ease-spring group-hover/link:translate-x-[0.08em] group-hover/link:-translate-y-[0.08em] [[data-game]_&]:opacity-0"
+                className="ml-[0.35em] size-[0.62em] align-[-0.04em] transition-[translate,opacity] duration-300 ease-spring group-hover/link:translate-x-[0.08em] group-hover/link:translate-y-[-0.08em] in-data-game:opacity-0"
               />
             </TextLink>
             <CopyEmail email={email.handle} />

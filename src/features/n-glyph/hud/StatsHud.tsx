@@ -113,7 +113,7 @@ export function StatsHud({ ref }: { ref?: Ref<StatsHudHandle> }) {
         id={panelId}
         role="region"
         aria-label={HUD_COPY.panelLabel}
-        className="bracket-frame pointer-events-none w-[300px] px-4 pt-4 pb-3.5 opacity-0 glass-panel transition-[clip-path,opacity] duration-500 ease-wipe [clip-path:inset(100%_0_0_100%)] group-data-open:pointer-events-auto group-data-open:opacity-100 group-data-open:[clip-path:inset(0)]"
+        className="bracket-frame pointer-events-none w-75 px-4 pt-4 pb-3.5 opacity-0 glass-panel transition-[clip-path,opacity] duration-500 ease-wipe [clip-path:inset(100%_0_0_100%)] group-data-open:pointer-events-auto group-data-open:opacity-100 group-data-open:[clip-path:inset(0)]"
       >
         <div data-hud-heading className="mb-1.5 text-fg">
           {HUD_COPY.telemetry}
