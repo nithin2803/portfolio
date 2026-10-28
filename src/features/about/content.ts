@@ -12,6 +12,7 @@ export const ABOUT_CHAT = {
   },
   contextFull: 'Context window full',
   newChat: 'New chat',
+  jumpToLatest: 'Latest',
   hiccup: 'nythos-6 hiccuped. Try that again in a sec.',
   sourcesLabel: 'read',
   rails: {

@@ -8,13 +8,23 @@ type ChatWindowProps = {
   canReset: boolean;
   onNewChat: () => void;
   composer: ReactNode;
+  // floats over the bottom of the conversation
+  jump: ReactNode;
   children: ReactNode;
 };
 
 // how long after the page stops scrolling before the conversation can take the wheel
 const PASS_THROUGH_MS = 500;
 
-export function ChatWindow({ scrollRef, busy, canReset, onNewChat, composer, children }: ChatWindowProps) {
+export function ChatWindow({
+  scrollRef,
+  busy,
+  canReset,
+  onNewChat,
+  composer,
+  jump,
+  children,
+}: ChatWindowProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   // while the page is scrolling, the conversation can't, so a page scroll that passes over the window
@@ -56,13 +66,14 @@ export function ChatWindow({ scrollRef, busy, canReset, onNewChat, composer, chi
           </span>
         </header>
         {/* a vignette under the header, as the message area's own background so text stays on top of it */}
-        <div className="relative flex min-h-0 flex-1 flex-col bg-[linear-gradient(to_bottom,rgb(0_0_0/0.2),rgb(0_0_0/0.05)_60%,transparent)] bg-[length:100%_320px] bg-no-repeat">
+        <div className="relative flex min-h-0 flex-1 flex-col bg-[linear-gradient(to_bottom,rgb(0_0_0/0.2),rgb(0_0_0/0.05)_60%,transparent)] bg-size-[100%_320px] bg-no-repeat">
           <div
             ref={scrollRef}
-            className="relative flex min-h-0 flex-1 [scrollbar-gutter:stable] flex-col gap-7 overflow-y-auto px-5 py-6 sm:px-6 [[data-passing]_&]:overflow-y-hidden"
+            className="relative flex min-h-0 flex-1 scrollbar-gutter-stable flex-col gap-7 overflow-y-auto px-5 py-6 sm:px-6 in-data-passing:overflow-y-hidden"
           >
             {children}
           </div>
+          {jump}
         </div>
         {composer}
       </div>

@@ -13,11 +13,13 @@ import { Composer } from './Composer';
 import { EmptyChat } from './EmptyChat';
 import type { ChatEvents } from './events';
 import { KVCacheRail } from './KVCacheRail';
+import { JumpToLatest } from './JumpToLatest';
 import { attend } from './model';
 import { ModelCardRail } from './ModelCardRail';
 import { useConversation, type ComposerControl } from './useConversation';
 import { useHeroJoin } from './useHeroJoin';
 import { UserMessage } from './UserMessage';
+import { useStickToBottom } from './useStickToBottom';
 
 type AboutChatProps = {
   heroId: string;
@@ -78,6 +80,7 @@ export function AboutChat({ heroId, lead, opener, reserved, links }: AboutChatPr
     events,
   );
   const started = messages.length > 0;
+  const { away, isPinned, repin, toBottom } = useStickToBottom(scrollRef);
 
   useEffect(() => events.context(0, NYTHOS.contextWindow), [events]);
 
@@ -174,13 +177,24 @@ export function AboutChat({ heroId, lead, opener, reserved, links }: AboutChatPr
   }, []);
 
   const lastUserKey = [...messages].reverse().find((m) => m.role === 'user')?.key;
+  // asking something new is a return to the conversation, wherever the visitor had scrolled
   useEffect(() => {
     const b = scrollRef.current;
     const el = b?.querySelector<HTMLElement>(`[data-user="${lastUserKey}"]`);
-    if (b && el) b.scrollTo({ top: el.offsetTop - KEEP_IN_VIEW, behavior: 'smooth' });
-  }, [lastUserKey]);
+    if (!b || !el) return;
+    repin();
+    b.scrollTo({ top: el.offsetTop - KEEP_IN_VIEW, behavior: 'smooth' });
+  }, [lastUserKey, repin]);
+
+  // a finished answer brings its follow-ups and chips into view, unless the visitor scrolled up to read
+  const wasBusy = useRef(false);
+  useEffect(() => {
+    if (wasBusy.current && !busy && isPinned()) toBottom();
+    wasBusy.current = busy;
+  }, [busy, isPinned, toBottom]);
 
   const keepCaretInView = () => {
+    if (!isPinned()) return;
     const b = scrollRef.current;
     const caret = b?.querySelector<HTMLElement>('[data-caret]');
     if (!b || !caret) return;
@@ -229,6 +243,7 @@ export function AboutChat({ heroId, lead, opener, reserved, links }: AboutChatPr
             busy={busy}
             canReset={started}
             onNewChat={startNewChat}
+            jump={<JumpToLatest visible={started && away} onJump={toBottom} />}
             composer={
               <Composer
                 inputRef={inputRef}
