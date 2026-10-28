@@ -14,6 +14,8 @@ export const maxDuration = 30;
 
 const MAX_BODY = 32 * 1024;
 const MAX_ASSISTANT_CHARS = 4000;
+// facet ids or follow-ups per answer, comfortably more than one answer ever has
+const MAX_TAGS = 8;
 
 const badRequest = () => Response.json({ error: 'bad request' }, { status: 400 });
 const tooLarge = () => Response.json({ error: 'too large' }, { status: 413 });
@@ -34,6 +36,16 @@ const clean = (s: string) =>
     .replace(/[ \t]+/g, ' ')
     .trim();
 
+// an answer's facet ids and offered follow-ups, from the client: they only steer suggestions, so a bad value is
+// dropped rather than refused
+const tags = (value: unknown) =>
+  Array.isArray(value)
+    ? value
+        .filter((v): v is string => typeof v === 'string')
+        .slice(0, MAX_TAGS)
+        .map((v) => clean(v).slice(0, CHAT_BUDGET.maxQuestionChars))
+    : [];
+
 function parseHistory(json: string): Turn[] | null {
   let body: unknown;
   try {
@@ -48,7 +60,16 @@ function parseHistory(json: string): Turn[] | null {
     if (!m || (m.role !== 'user' && m.role !== 'assistant') || typeof m.content !== 'string') return null;
     const limit = m.role === 'user' ? CHAT_BUDGET.maxQuestionChars : MAX_ASSISTANT_CHARS;
     const content = clean(m.content).slice(0, limit);
-    if (content) turns.push({ role: m.role, content });
+    if (!content) continue;
+    if (m.role === 'user') turns.push({ role: m.role, content });
+    else
+      turns.push({
+        role: m.role,
+        content,
+        about: tags(m.about),
+        offered: tags(m.offered),
+        offeredFacets: tags(m.offeredFacets),
+      });
   }
   while (turns[0]?.role === 'assistant') turns.shift();
   return turns.at(-1)?.role === 'user' ? turns : null;

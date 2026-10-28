@@ -7,4 +7,4 @@ actions: ['[LinkedIn](contact:linkedin)', '[Resume](contact:resume)']
 
 Hey, I’m Nithin.
 
-I’m an SDE 2 at Amazon, where I work on the evaluation and inference infrastructure behind Alexa for Shopping (Amazon Rufus).
+I’m an SDE 2 at Amazon, where I work on the evaluation and inference infrastructure behind Alexa for Shopping.

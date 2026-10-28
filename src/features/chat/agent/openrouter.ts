@@ -68,7 +68,8 @@ export async function* streamChat({ messages, tools, maxTokens, schema, signal, 
       ...(title && { 'X-Title': title }),
     },
     body: JSON.stringify({
-      model: NYTHOS.openRouterId,
+      // CHAT_MODEL lets the evals compare another model on the same prompt
+      model: process.env.CHAT_MODEL || NYTHOS.openRouterId,
       messages,
       tools,
       stream: true,

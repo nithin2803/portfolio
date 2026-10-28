@@ -97,7 +97,6 @@ export function imageSize(file: string): { width: number; height: number } {
 const DARK = 0.04;
 const LIGHT = 0.9;
 
-
 const NAMED: Record<string, string> = { black: '#000000', white: '#ffffff', red: '#ff0000' };
 function hexColor(c: string): string | null {
   const named = NAMED[c.toLowerCase()];

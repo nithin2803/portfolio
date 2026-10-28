@@ -33,13 +33,85 @@ export const isAsked = (history: readonly string[]) => {
   return (question: string) => asked.has(normalize(question));
 };
 
+// One answerable thing in me.md: a paragraph or a bullet, under the heading that names its section. `more` facets
+// come after a <!-- more --> line: the model only sees a teaser of them until a visitor asks
+export type Facet = { id: string; section: string; text: string; more: boolean };
+
+const MORE = '<!-- more -->';
+// how much of a held-back facet the model sees, enough to know what it's about
+const TEASER_WORDS = 8;
+
+// me.md as the model sees it, with each facet's id in front of it, plus the facets. A heading with facets under it
+// is a section; one with none (like "# Projects") only groups the sections below it
+export function parseFacets(text: string): { prompt: string; facets: Facet[] } {
+  const facets: Facet[] = [];
+  const out: string[] = [];
+  const count = new Map<string, number>();
+  let section = '';
+  let more = false;
+  let current: string[] = [];
+  const flush = () => {
+    if (!current.length) return;
+    if (!section) fail(ME, `"${current[0].slice(0, 40)}…" isn't under a heading`);
+    const n = (count.get(section) ?? 0) + 1;
+    count.set(section, n);
+    const facet = { id: `${section} #${n}`, section, text: current.join(' ').trim(), more };
+    facets.push(facet);
+    if (!more) out.push(`[${facet.id}] ${facet.text}`);
+    else {
+      const words = facet.text.split(/\s+/);
+      const teaser = words.slice(0, TEASER_WORDS).join(' ') + (words.length > TEASER_WORDS ? '…' : '');
+      out.push(`[${facet.id}] (more) ${teaser}`);
+    }
+    current = [];
+  };
+  const seen = new Set<string>();
+  for (const line of text.split('\n')) {
+    const heading = line.match(/^#{1,6}\s+(.+?)\s*$/);
+    const item = line.match(/^\s*(?:[-*]|\d+\.)\s+(.+)$/);
+    if (heading) {
+      flush();
+      section = heading[1];
+      more = false;
+      if (seen.has(section)) fail(ME, `two headings are both "${section}"`);
+      seen.add(section);
+      out.push('', line);
+    } else if (line.trim() === MORE) {
+      flush();
+      more = true;
+    } else if (!line.trim()) flush();
+    else if (item) {
+      flush();
+      current.push(item[1]);
+    } else current.push(line.trim());
+  }
+  flush();
+  return { prompt: out.join('\n').trim(), facets };
+}
+
 export type Action = { label: string; href: string };
+
+const contact = (label: (typeof CONTACT_LINKS)[number]['label']) =>
+  CONTACT_LINKS.find((l) => l.label === label)!.href;
+
+function chipsFor(posts: readonly { slug: string; title: string }[]): Record<string, Action> {
+  return {
+    email: { label: 'Email me', href: contact('Email') },
+    resume: { label: 'Resume', href: contact('Resume') },
+    linkedin: { label: 'LinkedIn', href: contact('LinkedIn') },
+    github: { label: 'GitHub', href: contact('GitHub') },
+    game: { label: 'Play the game', href: PLAY_GAME.href },
+    ...Object.fromEntries(posts.map((p) => [`post:${p.slug}`, { label: p.title, href: `/blog/${p.slug}` }])),
+  };
+}
 export type Canned = { question: string; text: string; followUps: string[]; actions: Action[] };
 
 export type Knowledge = {
   // Nithin's own writing: the model's only facts and its voice
-  // its followUps are the only ones the model may suggest
-  me: { text: string; actions: Action[]; followUps: string[] };
+  // `text` is me.md with facet ids, for the prompt; answers and follow-ups name facets
+  me: { text: string; facets: Facet[] };
+  // the chips the model may put under an answer, by id: only these, so it can't get a link wrong
+  chips: Record<string, Action>;
   posts: { title: string; href: string }[];
   reserved: Record<ReservedId, Canned>;
   links: LinkCatalog;
@@ -101,7 +173,7 @@ export const getKnowledge = cache(async (): Promise<Knowledge> => {
 
   const me = files.get(ME) ?? fail(ME, 'missing');
   if (!me.text) fail(ME, 'is empty');
-  if (!me.followUps.length) fail(ME, '`followUps` needs at least one question');
+  const parsed = parseFacets(me.text);
   const reserved = Object.fromEntries(
     RESERVED_IDS.map((id) => [id, files.get(id) ?? fail(id, 'this reserved answer is missing')]),
   ) as Record<ReservedId, Canned>;
@@ -125,7 +197,8 @@ export const getKnowledge = cache(async (): Promise<Knowledge> => {
   const links = { hrefs: Object.fromEntries([...hrefs].map((h) => [h, iconFor(h)])), terms: glossary.terms };
 
   return {
-    me: { text: me.text, actions: me.actions, followUps: me.followUps },
+    me: { text: parsed.prompt, facets: parsed.facets },
+    chips: chipsFor(posts),
     posts: posts.map((p) => ({ title: p.title, href: `/blog/${p.slug}` })),
     reserved,
     links,

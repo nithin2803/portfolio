@@ -28,9 +28,13 @@ bun test                       # bun's runner; test/mdx.ts stubs .mdx bodies, so
 bunx prettier --write <files>  # formatting; prettier and eslint win every style argument
 bun run build
 bun run icons                  # after editing content/icons.yaml; regenerates src/lib/glossary.generated.json
+bun run evals                  # asks evals/cases.yaml through the real chat agent (paid), saves to evals/runs/
+bun run evals:grade            # grading page on :3002 for those runs
+bun run facets                 # how the chat splits content/chat/me.md into sections and facets
 ```
 
-`bun run icons --suggest` calls a paid model and rewrites files in `content/`. Ask before running it.
+`bun run icons --suggest` calls a paid model and rewrites files in `content/`, and `bun run evals` makes one or more
+paid calls per case. Ask before running either.
 
 ## Done means
 
@@ -49,6 +53,8 @@ bun run icons                  # after editing content/icons.yaml; regenerates s
   in dev and finds nothing in production.
 - Never hand-edit `src/lib/glossary.generated.json`. Edit `content/icons.yaml`, then `bun run icons`.
 - Never print or commit `.env.local`.
+- New content for the chat goes in `content/chat/me.md`, in Nithin's own words and in the section and facet
+  structure `content/chat/README.md` describes. Run `bun run facets` afterwards.
 
 ## Code
 

@@ -1,10 +1,11 @@
 import { getPosts, getPostText } from '@/features/blog';
+import type { Knowledge } from '../knowledge';
 import { CONTACT_LINKS } from '@/lib/site';
 import type { ToolSpec } from './openrouter';
 
 const NO_ARGS = { type: 'object', properties: {}, additionalProperties: false };
 
-export const TOOLS: ToolSpec[] = [
+const TOOLS: ToolSpec[] = [
   {
     type: 'function',
     function: {
@@ -36,9 +37,35 @@ export const TOOLS: ToolSpec[] = [
   },
 ];
 
+// read_more only exists while me.md holds something back
+export function toolsFor(k: Knowledge): ToolSpec[] {
+  const more = k.me.facets.filter((f) => f.more).map((f) => f.id);
+  if (!more.length) return TOOLS;
+  return [
+    ...TOOLS,
+    {
+      type: 'function',
+      function: {
+        name: 'read_more',
+        description:
+          'Read one of the "(more)" facts about Nithin, which you only see a teaser of, by its id.',
+        parameters: {
+          type: 'object',
+          properties: { facet: { type: 'string', enum: more } },
+          required: ['facet'],
+          additionalProperties: false,
+        },
+      },
+    },
+  ];
+}
+
 export type ToolResult = { content: string; label: string; href?: string };
 
-export async function runTool(name: string, rawArgs: string): Promise<ToolResult> {
+// the label shown over the answer while it reads one, like "Orbi notes"
+export const moreLabel = (section: string) => `${section} notes`;
+
+export async function runTool(k: Knowledge, name: string, rawArgs: string): Promise<ToolResult> {
   let args: Record<string, unknown> = {};
   try {
     args = rawArgs ? JSON.parse(rawArgs) : {};
@@ -79,6 +106,11 @@ export async function runTool(name: string, rawArgs: string): Promise<ToolResult
       href: '/#contact',
       content: JSON.stringify(CONTACT_LINKS.map(({ label, href }) => ({ label, href }))),
     };
+  }
+  if (name === 'read_more') {
+    const facet = k.me.facets.find((f) => f.more && f.id === args.facet);
+    if (!facet) return { content: JSON.stringify({ error: 'no such fact' }), label: 'notes' };
+    return { label: moreLabel(facet.section), content: JSON.stringify({ id: facet.id, text: facet.text }) };
   }
   return { content: JSON.stringify({ error: `unknown tool ${name}` }), label: name };
 }

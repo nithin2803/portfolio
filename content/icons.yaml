@@ -21,7 +21,7 @@
 #   [Go](@go)    this mention gets term `go`'s icon (how auto: false names get one; --suggest writes these)
 #   [Sure](@-)   this mention stays plain
 
-suggested: 79e604013c5fe7c6
+suggested: 74445eeed7754ea7
 
 terms:
   Amazon: { image: amazon-smile.png, width: 119, sites: [amazon.com, amazon.jobs, aboutamazon.com] }
@@ -69,6 +69,38 @@ terms:
   HTML: { brand: html5 }
   Claude-in-Chrome: { brand: chrome }
 
+  # proposed by `bun run icons --suggest` on 2026-10-28: keep, edit, or move to ignore
+  Railway: { brand: railway }
+  Inngest: { brand: inngest }
+  Flutter: { brand: flutter }
+  Django: { brand: django }
+  jQuery: { brand: jquery }
+  Vercel: { brand: vercel }
+  OpenRouter: { favicon: openrouter.ai }
+  Vanta: { favicon: vanta.com }
+  Zenoti: { favicon: zenoti.com }
+  Bryt Learning: { favicon: bryt.in, aliases: [Bryt] }
+  ChatGPT: { brand: openai-chatgpt }
+  Tanstack Start: { brand: tanstack }
+  Mailbox Peak: { map: 'Mailbox Peak Trail, Washington' }
+  Snow Lake: { map: 'Snow Lake Trail, Washington' }
+  Mt. Pilchuck: { map: 'Mount Pilchuck Trail, Washington' }
+  Patagonia: { map: 'Patagonia, South America' }
+  Peru: { map: Peru }
+  Lombok: { map: 'Lombok, Indonesia' }
+  San Francisco: 🌉
+  skiing: ⛷️
+  hiking: 🥾
+  photography: 📷
+  working out: 💪
+  Coffee: ☕
+  Coke Zero: 🥤
+  Ribeye: 🥩
+  woodworking: 🪚
+  blacksmithing: ⚒️
+  northern lights: 🌌
+  "D'La Santa": { map: "D'La Santa, Seattle" }
+
 # every other link shows the favicon of the site it points to, fetched through /api/favicon (nothing is
 # saved). These borrow another site's instead: a host (subdomains included) or host/path, longest match first.
 favicons: { google.com/maps: maps.google.com, maps.app.goo.gl: maps.google.com }
@@ -81,7 +113,7 @@ ignore: [Paxos, RAG, EU, Compliance, Education, Portfolio]
 skipped:
   {
     act: 2,
-    AI: 4,
+    AI: 7,
     Canvas: 1,
     character: 2,
     Code: 1,
@@ -89,15 +121,17 @@ skipped:
     Exact: 1,
     Go: 1,
     Images: 1,
-    job: 1,
+    job: 2,
     MCP: 1,
     ML: 1,
     Neon: 1,
     Power: 1,
+    Rapid: 1,
     role: 1,
     Router: 1,
-    Search: 2,
+    Search: 1,
     sharp: 1,
     Squash: 1,
     Sure: 1,
+    Zero: 1,
   }

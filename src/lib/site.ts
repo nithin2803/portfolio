@@ -1,9 +1,9 @@
 export const SITE = {
-  name: "Nithin's Portfolio",
-  title: "Nithin's Portfolio",
+  name: 'Nithin Srinivasan, Software Engineer',
+  title: 'Nithin Srinivasan, Software Engineer',
   author: 'Nithin',
-  description: "Nithin's internet playground",
-  url: 'https://nithin.dev', // placeholder until the domain is decided
+  description: 'My personal portfolio, blog, and everything in between.',
+  url: 'https://nithins.dev',
   location: 'Seattle',
   timeZone: 'America/Los_Angeles',
 } as const;

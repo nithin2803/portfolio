@@ -21,6 +21,10 @@ export type Message =
       sources: Source[];
       followUps: string[];
       actions: Action[];
+      // the me.md facets it drew on, sent back so later answers don't suggest them again
+      about: string[];
+      // the facet behind each follow-up, sent back so tapping one can bring it in
+      followUpFacets: string[];
       canned: boolean;
     };
 
@@ -111,6 +115,8 @@ export function useConversation(
           sources: [],
           followUps: [],
           actions: [],
+          about: [],
+          followUpFacets: [],
           canned: false,
         },
       ]);
@@ -130,7 +136,17 @@ export function useConversation(
         return reply?.role === 'assistant' && !reply.canned && Boolean(reply.text);
       };
       const turns = [
-        ...history.filter(answered).map((m) => ({ role: m.role, content: m.text })),
+        ...history.filter(answered).map((m) =>
+          m.role === 'user'
+            ? { role: m.role, content: m.text }
+            : {
+                role: m.role,
+                content: m.text,
+                about: m.about,
+                offered: m.followUps,
+                offeredFacets: m.followUpFacets,
+              },
+        ),
         { role: 'user', content: question },
       ];
       const canned = (id: ReservedId) => {
@@ -160,7 +176,16 @@ export function useConversation(
             setBusy(false);
             return;
           } else if (e.type === 'done') {
-            patch(replyKey, (m) => (m.canned ? {} : { followUps: e.followUps, actions: e.actions }));
+            patch(replyKey, (m) =>
+              m.canned
+                ? {}
+                : {
+                    followUps: e.followUps,
+                    followUpFacets: e.followUpFacets,
+                    actions: e.actions,
+                    about: e.about,
+                  },
+            );
             const total = e.promptTokens + e.completionTokens;
             if (total) {
               events.context(total, NYTHOS.contextWindow);

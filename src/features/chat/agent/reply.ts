@@ -1,3 +1,5 @@
+import type { Turn } from './index';
+
 // The model replies in JSON held to replySchema by the provider. Fields are written in schema order, so the
 // answer streams: `refused` and `sources` decide whether it's shown at all, then `messages` streams as it's written.
 
@@ -6,17 +8,30 @@ export const ME = 'me';
 export const BLOG = 'blog';
 export const PARTIAL = 'partial';
 
-// follow-ups can only be questions from `questions` (me.md's list), so they're always ones Nithin's writing answers
-export function replySchema(questions: readonly string[]) {
+// `about` names the me.md facets the answer drew on, and each follow-up the facet that would answer it. A follow-up
+// is kept only if its facet is in a section the answer was about and hasn't been covered yet in the conversation, so
+// the model words them freely but they stay on topic, never repeat, and are always ones Nithin's writing answers.
+// `actions` are chip ids from Knowledge.chips, resolved to links by the server
+export function replySchema(facets: readonly string[], chips: readonly string[]) {
   return {
     type: 'object',
     properties: {
       refused: { type: 'boolean' },
       sources: { type: 'array', items: { type: 'string', enum: [ME, BLOG, PARTIAL] } },
       messages: { type: 'array', items: { type: 'string' } },
-      followUps: { type: 'array', items: { type: 'string', enum: questions } },
+      about: { type: 'array', items: { type: 'string', enum: facets } },
+      actions: { type: 'array', items: { type: 'string', enum: chips } },
+      followUps: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: { question: { type: 'string' }, facet: { type: 'string', enum: facets } },
+          required: ['question', 'facet'],
+          additionalProperties: false,
+        },
+      },
     },
-    required: ['refused', 'sources', 'messages', 'followUps'],
+    required: ['refused', 'sources', 'messages', 'about', 'actions', 'followUps'],
     additionalProperties: false,
   };
 }
@@ -25,13 +40,21 @@ export type Verdict = {
   refused: boolean;
   // [] when nothing Nithin wrote covers the question
   sources: string[];
-  followUps: string[];
+  // the me.md facets the answer drew on, so later turns know they're covered
+  about: string[];
+  // chip ids, unchecked: the server keeps only ones it knows
+  actions: string[];
+  followUps: FollowUp[];
 };
+
+// a follow-up and the facet that answers it, so tapping it can bring that facet in
+export type FollowUp = { question: string; facet: string };
 
 const REFUSED = /"refused"\s*:\s*(true|false)/;
 const SOURCES = /"sources"\s*:\s*(\[[^\]]*\])/;
 const MESSAGES = /"messages"\s*:\s*\[/;
 const MAX_FOLLOW_UPS = 3;
+const MAX_ABOUT = 3;
 
 // a JSON string's body, cut before an escape that's only half written
 function decode(body: string) {
@@ -82,6 +105,9 @@ function parse(json?: string): unknown {
   }
 }
 
+// Nithin doesn't write em dashes, but the model leans on them however it's asked
+const noDashes = (text: string) => text.replace(/\s*[—–]\s*/g, ', ');
+
 const asText = (messages: readonly string[]) =>
   messages
     .map((m) => m.trim())
@@ -94,7 +120,12 @@ export class ReplyStream {
   private raw = '';
   private shown = '';
 
-  constructor(private readonly emit: (text: string) => void) {}
+  constructor(
+    private readonly emit: (text: string) => void,
+    private readonly facets: FacetIndex,
+    // facets earlier answers in the conversation already drew on
+    private readonly covered: ReadonlySet<string> = new Set(),
+  ) {}
 
   push(delta: string) {
     this.raw += delta;
@@ -104,14 +135,23 @@ export class ReplyStream {
     this.show(asText(partialMessages(this.raw)));
   }
 
-  private show(text: string) {
+  // trailing whitespace is held back so a dash written after it can still become a comma
+  private show(raw: string) {
+    const text = noDashes(raw).trimEnd();
     if (text.length <= this.shown.length || !text.startsWith(this.shown)) return;
     this.emit(text.slice(this.shown.length));
     this.shown = text;
   }
 
   finish(): Verdict {
-    let reply: { refused?: unknown; sources?: unknown; messages?: unknown; followUps?: unknown } = {};
+    let reply: {
+      refused?: unknown;
+      sources?: unknown;
+      messages?: unknown;
+      about?: unknown;
+      actions?: unknown;
+      followUps?: unknown;
+    } = {};
     try {
       reply = JSON.parse(this.raw);
     } catch {
@@ -124,10 +164,70 @@ export class ReplyStream {
       // sources but nothing to say is as good as a refusal
       refused: refused || (sources.length > 0 && !this.shown),
       sources,
-      followUps: strings(reply.followUps)
-        .map((q) => q.trim())
-        .filter(Boolean)
-        .slice(0, MAX_FOLLOW_UPS),
+      about: this.about(reply.about).map((f) => f.id),
+      actions: strings(reply.actions),
+      followUps: this.followUps(reply.followUps, this.about(reply.about)).slice(0, MAX_FOLLOW_UPS),
     };
   }
+
+  // a facet the model named loosely ("orbi #2" for "Orbi #2") still counts: hosts don't all enforce the enum
+  private facet(name: unknown) {
+    return typeof name === 'string' ? this.facets.get(facetKey(name)) : undefined;
+  }
+
+  // capped, since an answer that touched everything would let a follow-up about anything through
+  private about(value: unknown) {
+    const found = strings(value).flatMap((s) => this.facet(s) ?? []);
+    return [...new Map(found.map((f) => [f.id, f])).values()].slice(0, MAX_ABOUT);
+  }
+
+  private followUps(value: unknown, about: readonly IndexedFacet[]): FollowUp[] {
+    const sections = new Set(about.map((f) => f.section));
+    const used = new Set([...this.covered, ...about.map((f) => f.id)]);
+    const kept: FollowUp[] = [];
+    const dropped: { followUp: unknown; why: string }[] = [];
+    for (const f of Array.isArray(value) ? value : []) {
+      const question = typeof f?.question === 'string' ? f.question.trim() : '';
+      const facet = this.facet(f?.facet);
+      const why = !question
+        ? 'no question'
+        : !facet
+          ? 'unknown facet'
+          : !sections.has(facet.section)
+            ? 'off topic'
+            : used.has(facet.id)
+              ? 'already covered'
+              : '';
+      if (why) dropped.push({ followUp: f, why });
+      else {
+        kept.push({ question, facet: facet!.id });
+        used.add(facet!.id);
+      }
+    }
+    if (dropped.length) console.warn(`[chat] dropped follow-ups: ${JSON.stringify(dropped)}`);
+    return kept;
+  }
+}
+
+// each way a facet can be named, to the facet: case and punctuation don't matter
+type IndexedFacet = { id: string; section: string };
+export type FacetIndex = ReadonlyMap<string, IndexedFacet>;
+export function facetIndex(facets: readonly IndexedFacet[]): FacetIndex {
+  return new Map(facets.map((f) => [facetKey(f.id), { id: f.id, section: f.section }]));
+}
+const facetKey = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+
+// the held-back facet behind the question just asked, when it's a follow-up the last answer offered
+export function tappedFacet<F extends { id: string; more: boolean }>(
+  facets: readonly F[],
+  history: readonly Turn[],
+) {
+  const [answer, question] = history.slice(-2);
+  if (answer?.role !== 'assistant' || question?.role !== 'user') return undefined;
+  const id = answer.offeredFacets?.[answer.offered?.indexOf(question.content) ?? -1];
+  return facets.find((f) => f.more && f.id === id);
 }

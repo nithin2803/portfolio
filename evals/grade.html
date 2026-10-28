@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat evals</title>
+    <style>
+      :root {
+        --bg: #0b0b0c;
+        --panel: #141416;
+        --line: #26262a;
+        --fg: #e8e8ea;
+        --muted: #8b8b92;
+        --faint: #5a5a60;
+        --good: #6fcf8f;
+        --bad: #ef6b6b;
+        --accent: #e8e8ea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          14px/1.5 ui-sans-serif,
+          system-ui,
+          sans-serif;
+      }
+      button,
+      textarea,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        min-height: 100vh;
+      }
+      aside {
+        border-right: 1px solid var(--line);
+        padding: 20px 16px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: auto;
+      }
+      main {
+        padding: 24px 32px 80px;
+        max-width: 900px;
+      }
+      h1 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        margin: 0 0 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .run {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+      }
+      .run[aria-current='true'] {
+        border-color: var(--fg);
+      }
+      .run .model {
+        font-weight: 600;
+      }
+      .run .meta,
+      .small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .scores {
+        display: grid;
+        grid-template-columns: repeat(4, auto);
+        gap: 2px 10px;
+        margin-top: 6px;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      .scores span:nth-child(odd) {
+        color: var(--faint);
+      }
+      .toolbar {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 24px;
+        color: var(--muted);
+      }
+      .group {
+        margin: 36px 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .case {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        margin-bottom: 16px;
+      }
+      .case > header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .case .good {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .turn {
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .turn:last-child {
+        border-bottom: 0;
+      }
+      .q {
+        text-align: right;
+        margin-bottom: 10px;
+      }
+      .q span,
+      .msg {
+        display: inline-block;
+        border: 1px solid var(--line);
+        padding: 6px 12px;
+        max-width: 85%;
+        text-align: left;
+        white-space: pre-wrap;
+      }
+      .q span {
+        background: #1d1d22;
+      }
+      .msgs {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .canned {
+        color: var(--muted);
+        font-style: italic;
+      }
+      .checks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 12px 0;
+      }
+      .check {
+        font-size: 11px;
+        padding: 2px 8px;
+        border: 1px solid var(--line);
+      }
+      .check.fail {
+        color: var(--bad);
+        border-color: var(--bad);
+      }
+      .dropped {
+        color: var(--faint);
+        text-decoration: line-through;
+      }
+      .check.pass {
+        color: var(--good);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 3px 0;
+      }
+      .row label {
+        color: var(--muted);
+      }
+      .pick {
+        display: flex;
+        gap: 4px;
+      }
+      .pick button {
+        width: 28px;
+        height: 26px;
+        border: 1px solid var(--line);
+        background: none;
+        cursor: pointer;
+        font-variant-numeric: tabular-nums;
+      }
+      .pick button[aria-pressed='true'] {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      .grading {
+        margin-top: 12px;
+        border-top: 1px dashed var(--line);
+        padding-top: 10px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 52px;
+        margin-top: 8px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        padding: 8px;
+        resize: vertical;
+      }
+      details {
+        margin-bottom: 24px;
+        color: var(--muted);
+      }
+      pre {
+        white-space: pre-wrap;
+        font-size: 12px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 12px;
+        max-height: 60vh;
+        overflow: auto;
+      }
+      .legend {
+        font-size: 12px;
+        color: var(--faint);
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside>
+        <h1>Runs</h1>
+        <div id="runs"></div>
+        <p class="legend">
+          Accuracy: true to me.md, nothing invented.<br />
+          Voice: sounds like you.<br />
+          Focus: answers what was asked, at the right length.<br />
+          Follow-ups: each one natural and tied to the last reply.<br />
+          Chips: the right buttons, or none when none fit.
+        </p>
+      </aside>
+      <main id="main">
+        <p class="small">No runs yet. Run <code>bun run evals</code> first.</p>
+      </main>
+    </div>
+    <script type="module">
+      const $ = (tag, attrs = {}, ...kids) => {
+        const el = document.createElement(tag);
+        for (const [k, v] of Object.entries(attrs)) {
+          if (k === 'class') el.className = v;
+          else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+          else el.setAttribute(k, v);
+        }
+        el.append(...kids.filter((k) => k != null));
+        return el;
+      };
+      const fmt = (x) => (x == null ? '–' : x.toFixed(2));
+      let current = null;
+      let ungradedOnly = false;
+
+      async function loadRuns() {
+        const runs = await fetch('/api/runs').then((r) => r.json());
+        const list = document.getElementById('runs');
+        list.replaceChildren(
+          ...runs.map((r) =>
+            $(
+              'button',
+              { class: 'run', 'aria-current': String(r.id === current?.id), onclick: () => open(r.id) },
+              $('div', { class: 'model' }, r.model),
+              $(
+                'div',
+                { class: 'meta' },
+                `${new Date(r.createdAt).toLocaleString()} · ${r.graded}/${r.turns} graded · checks ${r.checks.passed}/${r.checks.total}`,
+              ),
+              $(
+                'div',
+                { class: 'scores' },
+                $('span', {}, 'acc'),
+                $('span', {}, fmt(r.accuracy)),
+                $('span', {}, 'voice'),
+                $('span', {}, fmt(r.voice)),
+                $('span', {}, 'focus'),
+                $('span', {}, fmt(r.focus)),
+                $('span', {}, 'f-ups'),
+                $('span', {}, fmt(r.followUps)),
+                $('span', {}, 'chips'),
+                $('span', {}, fmt(r.chips)),
+              ),
+            ),
+          ),
+        );
+        if (!current && runs[0]) open(runs[0].id);
+      }
+
+      async function open(id) {
+        current = await fetch(`/api/runs/${id}`).then((r) => r.json());
+        render();
+        loadRuns();
+      }
+
+      async function save(key) {
+        await fetch(`/api/runs/${current.id}/grades/${encodeURIComponent(key)}`, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(current.grades[key] ?? {}),
+        });
+        loadRuns();
+      }
+
+      function picker(value, onPick) {
+        const wrap = $('div', { class: 'pick' });
+        for (let n = 1; n <= 5; n++) {
+          wrap.append(
+            $(
+              'button',
+              {
+                'aria-pressed': String(value === n),
+                onclick: () => {
+                  onPick(value === n ? undefined : n);
+                },
+              },
+              String(n),
+            ),
+          );
+        }
+        return wrap;
+      }
+
+      function turnView(c, t, i) {
+        const key = `${c.id}/${i}`;
+        const grade = (current.grades[key] ??= {});
+        const set = (field, v) => {
+          grade[field] = v;
+          save(key);
+          rerenderTurn();
+        };
+        const node = $('div', { class: 'turn' });
+        const rerenderTurn = () => node.replaceWith(turnView(c, t, i));
+
+        const messages = t.text.split(/\n{2,}/).filter((m) => m.trim());
+        node.append(
+          $('div', { class: 'q' }, $('span', {}, t.question)),
+          t.error
+            ? $('div', { class: 'canned' }, `error: ${t.error}`)
+            : $(
+                'div',
+                { class: 'msgs' },
+                t.canned ? $('div', { class: 'small' }, `canned reply: ${t.canned}`) : null,
+                ...messages.map((m) => $('div', { class: t.canned ? 'msg canned' : 'msg' }, m)),
+              ),
+          $(
+            'div',
+            { class: 'checks' },
+            ...t.checks.map((ch) =>
+              $(
+                'span',
+                { class: `check ${ch.pass ? 'pass' : 'fail'}` },
+                `${ch.pass ? '✓' : '✗'} ${ch.name}${ch.detail && !ch.pass ? ` (${ch.detail})` : ''}`,
+              ),
+            ),
+          ),
+          $(
+            'div',
+            { class: 'small' },
+            `${t.verdict || '–'} · ${t.ms}ms · ${t.promptTokens}+${t.completionTokens} tokens`,
+          ),
+          t.about?.length ? $('div', { class: 'small' }, `about: ${t.about.join(', ')}`) : null,
+          ...(t.dropped ?? []).map((d) =>
+            $(
+              'div',
+              { class: 'small dropped' },
+              `dropped (${d.why}): ${d.followUp?.question ?? JSON.stringify(d.followUp)}${d.followUp?.facet ? ` → ${d.followUp.facet}` : ''}`,
+            ),
+          ),
+        );
+
+        if (t.canned || t.error) return node;
+        const grading = $('div', { class: 'grading' });
+        for (const [field, label] of [
+          ['accuracy', 'Accuracy'],
+          ['voice', 'Voice'],
+          ['focus', 'Focus'],
+          ['chips', `Chips: ${(t.actions ?? []).join(', ') || 'none'}`],
+        ]) {
+          grading.append(
+            $(
+              'div',
+              { class: 'row' },
+              $('label', {}, label),
+              picker(grade[field], (v) => set(field, v)),
+            ),
+          );
+        }
+        t.followUps.forEach((q, j) => {
+          grading.append(
+            $(
+              'div',
+              { class: 'row' },
+              $('label', {}, `↳ ${q}`),
+              picker(grade.followUps?.[j], (v) => {
+                const list = [...(grade.followUps ?? [])];
+                list[j] = v;
+                set('followUps', list);
+              }),
+            ),
+          );
+        });
+        const notes = $('textarea', { placeholder: 'Notes: what was wrong, what you would have said' });
+        notes.value = grade.notes ?? '';
+        notes.addEventListener('change', () => {
+          grade.notes = notes.value;
+          save(key);
+        });
+        grading.append(notes);
+        node.append(grading);
+        return node;
+      }
+
+      function graded(c) {
+        return c.turns.every((t, i) => {
+          const g = current.grades[`${c.id}/${i}`];
+          return t.canned || t.error || (g?.accuracy && g?.voice && g?.focus);
+        });
+      }
+
+      function render() {
+        const main = document.getElementById('main');
+        const toggle = $('input', { type: 'checkbox' });
+        toggle.checked = ungradedOnly;
+        toggle.addEventListener('change', () => {
+          ungradedOnly = toggle.checked;
+          render();
+        });
+        const kids = [
+          $(
+            'div',
+            { class: 'toolbar' },
+            $('strong', {}, current.model),
+            $('label', {}, toggle, ' ungraded only'),
+          ),
+          $('details', {}, $('summary', {}, 'System prompt for this run'), $('pre', {}, current.prompt)),
+        ];
+        let group = null;
+        for (const c of current.cases) {
+          if (ungradedOnly && graded(c)) continue;
+          if (c.group !== group) {
+            group = c.group;
+            kids.push($('div', { class: 'group' }, group));
+          }
+          kids.push(
+            $(
+              'section',
+              { class: 'case' },
+              $(
+                'header',
+                {},
+                $('strong', {}, c.id),
+                $(
+                  'span',
+                  { class: 'good' },
+                  [c.good, c.expect && `expect: ${c.expect}`].filter(Boolean).join(' · '),
+                ),
+              ),
+              ...c.turns.map((t, i) => turnView(c, t, i)),
+            ),
+          );
+        }
+        main.replaceChildren(...kids);
+      }
+
+      loadRuns();
+    </script>
+  </body>
+</html>
