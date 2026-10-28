@@ -4,21 +4,16 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import { cache } from 'react';
 import { getPosts } from '@/features/blog';
-import { CONTACT_LINKS, NAV_LINKS } from '@/lib/site';
+import { CONTACT_LINKS, NAV_LINKS, PLAY_GAME } from '@/lib/site';
 import { iconFor } from '@/lib/brands';
 import { glossary } from '@/lib/glossary';
 import type { LinkCatalog } from './markdown';
 import { RESERVED_IDS, type ReservedId } from './types';
 
 const DIR = path.join(process.cwd(), 'content/chat');
+const ME = 'me';
 const LINK = /\[([^\]]*)\]\(([^)\s]+)\)/g;
 const ACTION = /^\[([^\]]+)\]\(([^)\s]+)\)$/;
-// a [placeholder] Nithin hasn't filled in yet: square brackets that aren't a link
-export const PLACEHOLDER = /\[[^\]]*\](?!\()/g;
-
-// what a visitor can ask: every entry with a question except the reserved replies (the opener is one)
-export const askable = (e: Entry) =>
-  Boolean(e.question) && (e.id === 'about-me' || !(RESERVED_IDS as readonly string[]).includes(e.id));
 
 const normalize = (q: string) =>
   q
@@ -27,13 +22,10 @@ const normalize = (q: string) =>
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 
-// a question asked word for word (a follow-up chip, or typed) gets the entry itself, no model needed.
-// entries with placeholders still go to the model, which knows to say they aren't written yet.
-export function entryFor(k: Knowledge, question: string): Entry | undefined {
-  const q = normalize(question);
-  return k.entries.find(
-    (e) => askable(e) && !e.live && normalize(e.question) === q && !e.body.match(PLACEHOLDER),
-  );
+// the opener asked word for word (its chip, or typed) is answered as written, no model needed
+export function cannedFor(k: Knowledge, question: string): Canned | undefined {
+  const opener = k.reserved['about-me'];
+  return normalize(opener.question) === normalize(question) ? opener : undefined;
 }
 
 export const isAsked = (history: readonly string[]) => {
@@ -42,24 +34,13 @@ export const isAsked = (history: readonly string[]) => {
 };
 
 export type Action = { label: string; href: string };
-export type Entry = {
-  id: string;
-  question: string;
-  describe: string;
-  body: string;
-  // facts the model may draw on but not quote; the body stays the voice example
-  notes: string;
-  followUps: string[];
-  actions: Action[];
-  // always answered by the model, never replayed word for word (its answer depends on live state, like the blog)
-  live: boolean;
-};
 export type Canned = { question: string; text: string; followUps: string[]; actions: Action[] };
 
 export type Knowledge = {
-  entries: Entry[];
+  // Nithin's own writing: the model's only facts and its voice
+  // its followUps are the only ones the model may suggest
+  me: { text: string; actions: Action[]; followUps: string[] };
   posts: { title: string; href: string }[];
-  byId: Record<string, Entry>;
   reserved: Record<ReservedId, Canned>;
   links: LinkCatalog;
   opener: string;
@@ -91,26 +72,24 @@ export const getKnowledge = cache(async (): Promise<Knowledge> => {
   const posts = await getPosts();
   const blogTitle = (slug: string) => posts.find((p) => p.slug === slug)?.title;
 
-  const raw: Entry[] = [];
+  const files = new Map<string, Canned>();
   for (const file of fs.readdirSync(DIR)) {
     if (!file.endsWith('.md') || file === 'README.md') continue;
     const id = file.slice(0, -3);
+    if (id !== ME && !(RESERVED_IDS as readonly string[]).includes(id)) {
+      fail(id, `not a reserved reply; facts about Nithin go in ${ME}.md`);
+    }
     const { data, content } = matter(fs.readFileSync(path.join(DIR, file), 'utf8'));
-    if (typeof data.question !== 'string') fail(id, '`question` must be a string');
-    if (typeof data.describe !== 'string' || !data.describe) fail(id, '`describe` is required');
+    const question = data.question ?? '';
+    if (typeof question !== 'string') fail(id, '`question` must be a string');
     const followUps = data.followUps ?? [];
-    if (!Array.isArray(followUps)) fail(id, '`followUps` must be a list of ids');
-    if (data.notes !== undefined && typeof data.notes !== 'string') fail(id, '`notes` must be text');
+    if (!Array.isArray(followUps)) fail(id, '`followUps` must be a list of questions');
     const actions = data.actions ?? [];
     if (!Array.isArray(actions)) fail(id, '`actions` must be a list of [label](href) links');
-    raw.push({
-      id,
-      question: data.question,
-      describe: data.describe,
-      body: resolveLinks(id, content.trim(), blogTitle),
-      notes: resolveLinks(id, (data.notes ?? '').trim(), blogTitle),
+    files.set(id, {
+      question,
+      text: resolveLinks(id, content.trim(), blogTitle),
       followUps: followUps.map(String),
-      live: data.live === true,
       actions: actions.map((a) => {
         const m = typeof a === 'string' && resolveLinks(id, a.trim(), blogTitle).match(ACTION);
         return m
@@ -120,19 +99,11 @@ export const getKnowledge = cache(async (): Promise<Knowledge> => {
     });
   }
 
-  const byId = new Map(raw.map((e) => [e.id, e]));
-  for (const id of RESERVED_IDS) if (!byId.has(id)) fail(id, 'this reserved answer is missing');
-  const questionOf = (owner: string, id: string) => {
-    const q = byId.get(id)?.question;
-    if (!q) fail(owner, `followUp "${id}" doesn't exist or has no question`);
-    return q;
-  };
-  const entries = raw.map((e) => ({ ...e, followUps: e.followUps.map((f) => questionOf(e.id, f)) }));
+  const me = files.get(ME) ?? fail(ME, 'missing');
+  if (!me.text) fail(ME, 'is empty');
+  if (!me.followUps.length) fail(ME, '`followUps` needs at least one question');
   const reserved = Object.fromEntries(
-    RESERVED_IDS.map((id) => {
-      const e = entries.find((x) => x.id === id)!;
-      return [id, { question: e.question, text: e.body, followUps: e.followUps, actions: e.actions }];
-    }),
+    RESERVED_IDS.map((id) => [id, files.get(id) ?? fail(id, 'this reserved answer is missing')]),
   ) as Record<ReservedId, Canned>;
 
   const hrefs = new Set<string>([
@@ -141,23 +112,23 @@ export const getKnowledge = cache(async (): Promise<Knowledge> => {
     ...NAV_LINKS.flatMap((l) => (l.href.startsWith('/') ? l.href : [])),
     '/',
     '/rss.xml',
+    PLAY_GAME.href,
     ...posts.map((p) => `/blog/${p.slug}`),
     ...glossary.terms.flatMap((t) => t.href ?? []),
   ]);
-  for (const e of entries) {
-    for (const m of `${e.body}\n${e.notes}`.matchAll(LINK)) hrefs.add(m[2]);
-    for (const a of e.actions) hrefs.add(a.href);
+  for (const f of files.values()) {
+    for (const m of f.text.matchAll(LINK)) hrefs.add(m[2]);
+    for (const a of f.actions) hrefs.add(a.href);
   }
   // nothing to link to until the first post is up
   if (!posts.length) for (const href of ['/blog', '/rss.xml']) hrefs.delete(href);
   const links = { hrefs: Object.fromEntries([...hrefs].map((h) => [h, iconFor(h)])), terms: glossary.terms };
 
   return {
-    entries,
+    me: { text: me.text, actions: me.actions, followUps: me.followUps },
     posts: posts.map((p) => ({ title: p.title, href: `/blog/${p.slug}` })),
-    byId: Object.fromEntries(entries.map((e) => [e.id, e])),
     reserved,
     links,
-    opener: byId.get('about-me')!.question,
+    opener: reserved['about-me'].question,
   };
 });

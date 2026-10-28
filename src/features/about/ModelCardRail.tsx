@@ -95,8 +95,8 @@ export function ModelCardRail({ ref, live, className }: ModelCardRailProps) {
         if (c.first) estimate();
         return;
       }
-      const secs = c.first ? (performance.now() - c.first) / 1000 : 0;
-      if (secs > 0.05) write(speed.current, `${Math.round(usage.completionTokens / secs)} tok/s`);
+      const secs = usage.generationMs / 1000;
+      write(speed.current, secs > 0.05 ? `${Math.round(usage.completionTokens / secs)} tok/s` : EMPTY);
     },
   }));
 

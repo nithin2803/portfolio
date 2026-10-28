@@ -3,6 +3,7 @@
 import { svg as rss } from 'thesvg/rss';
 import { glossary } from './glossary';
 import type { LinkIcon } from './icons';
+import { PLAY_GAME } from './site';
 
 // an external link shows the favicon of the site it points to, unless the glossary says to borrow another
 // site's (a Maps link's own favicon is Google's G). A prefix matches the host and its subdomains, or host + path.
@@ -17,6 +18,7 @@ function linkIcon(url: URL): LinkIcon {
 
 export function iconFor(href: string): LinkIcon | null {
   if (href.startsWith('mailto:')) return { kind: 'mail' };
+  if (href === PLAY_GAME.href) return { kind: 'play' };
   if (href.endsWith('.xml')) return { kind: 'svg', svg: rss };
   if (href.endsWith('.pdf')) return { kind: 'doc' };
   if (href.startsWith('/')) return { kind: 'site' };

@@ -1,8 +1,10 @@
 ---
 question: 'Who are you?'
 describe: 'General intro: who Nithin is, a quick overview of him.'
-followUps: [work, interests, seattle]
+followUps: ['What do you work on?', 'What have you built on the side?', 'Where did you go to school?']
 actions: ['[LinkedIn](contact:linkedin)', '[Resume](contact:resume)']
 ---
 
-I’m Nithin, a SDE 2 at Amazon. I'm on Alexa for Shopping, building the evaluation infrastructure that tells us whether our agents are actually improving. Before this, I worked on the RAG infrastructure that powers contextual responses on Alexa and Search.
+Hey, I’m Nithin.
+
+I’m an SDE 2 at Amazon, where I work on the evaluation and inference infrastructure behind Alexa for Shopping (Amazon Rufus).

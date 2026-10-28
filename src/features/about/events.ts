@@ -6,7 +6,7 @@ export type TokenEvent = {
   attention: Attention;
 };
 
-export type Usage = { promptTokens: number; completionTokens: number };
+export type Usage = { promptTokens: number; completionTokens: number; generationMs: number };
 
 export type ChatEvents = {
   reset(): void;

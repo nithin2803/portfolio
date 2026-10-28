@@ -8,6 +8,7 @@ export type LinkIcon =
   | { kind: 'favicon'; site: string }
   | { kind: 'mail' }
   | { kind: 'doc' }
+  | { kind: 'play' }
   | { kind: 'site' }
   | { kind: 'external' };
 

@@ -123,10 +123,14 @@ export function useConversation(
   const run = useCallback(
     async (question: string, history: Message[], signal: AbortSignal) => {
       const { userKey, replyKey } = open(question, question);
+      // a question that got a canned reply (refused, not written, an error) is left out with its reply, or the
+      // model answers it late, on the next turn
+      const answered = (m: Message, i: number) => {
+        const reply = m.role === 'user' ? history[i + 1] : m;
+        return reply?.role === 'assistant' && !reply.canned && Boolean(reply.text);
+      };
       const turns = [
-        ...history
-          .filter((m) => m.role === 'user' || (!m.canned && m.text))
-          .map((m) => ({ role: m.role, content: m.text })),
+        ...history.filter(answered).map((m) => ({ role: m.role, content: m.text })),
         { role: 'user', content: question },
       ];
       const canned = (id: ReservedId) => {
@@ -162,7 +166,11 @@ export function useConversation(
               events.context(total, NYTHOS.contextWindow);
               if (total + CHAT_BUDGET.maxOutputTokens > NYTHOS.contextWindow) setFull(true);
             }
-            events.done({ promptTokens: e.promptTokens, completionTokens: e.completionTokens });
+            events.done({
+              promptTokens: e.promptTokens,
+              completionTokens: e.completionTokens,
+              generationMs: e.generationMs,
+            });
           }
         }
       } catch (err) {

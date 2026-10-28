@@ -45,23 +45,15 @@ terms:
   WebGL: { brand: webgl }
   Tailwind: { brand: tailwindcss }
   three.js: { brand: threedotjs }
-  iPhone 16 Pro: { brand: apple }
+  Java: { brand: java }
+  Python: { brand: python }
   Rufus: { image: amazon-smile.png, width: 119 }
   Seattle: 🌲
-  Bellevue: 🏙️
   Hyderabad: 🕌
   India: 🇮🇳
   SF: 🌉
   Fjaðrárgljúfur: { map: 'Fjaðrárgljúfur, Iceland' }
   Iceland: 🇮🇸
-  Mount Rainier National Park: { map: 'Mount Rainier National Park, Washington' }
-  Mailbox Peak: { map: 'Mailbox Peak Trail, Washington' }
-  Snow Lake: { map: 'Snow Lake Trail, Washington' }
-  glacier hiking: 🧗
-  Icelandic horses: 🐴
-  Patagonia: { map: Patagonia }
-  Machu Picchu: { map: 'Machu Picchu, Peru' }
-  coffee: ☕
 
   # proposed by `bun run icons --suggest` on 2026-10-21: keep, edit, or move to ignore
 
@@ -82,7 +74,7 @@ terms:
 favicons: { google.com/maps: maps.google.com, maps.app.goo.gl: maps.google.com }
 
 # names you've decided stay plain: --suggest never asks about them
-ignore: [Paxos, RAG]
+ignore: [Paxos, RAG, EU, Compliance, Education, Portfolio]
 
 # names --suggest judged ordinary words where they appear, with how many plain mentions it saw: it asks again
 # when that count changes (move one to ignore to stop that, or to terms to give it an icon)

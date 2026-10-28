@@ -11,6 +11,8 @@ const MAIL =
   '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M1 3h14v10H1z" fill="none" stroke="#000" stroke-width="1.5"/><path d="M1.5 3.5 8 9l6.5-5.5" fill="none" stroke="#000" stroke-width="1.5"/></svg>';
 const DOC =
   '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M3 1.5h6.5L13 5v9.5H3z M9.5 1.5V5H13" fill="none" stroke="#000" stroke-width="1.5"/><path d="M5.5 8.5h5M5.5 11h5" stroke="#000" stroke-width="1.5"/></svg>';
+const PLAY =
+  '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2.5v11L13 8z" fill="none" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>';
 const EXTERNAL =
   '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M5 3h8v8M13 3 3 13" fill="none" stroke="#000" stroke-width="1.5"/></svg>';
 
@@ -87,6 +89,8 @@ export function LinkIconView({ icon, className }: LinkIconViewProps) {
       return <SvgIcon svg={MAIL} className={className} />;
     case 'doc':
       return <SvgIcon svg={DOC} className={className} />;
+    case 'play':
+      return <SvgIcon svg={PLAY} className={className} />;
     case 'external':
       return <SvgIcon svg={EXTERNAL} className={className} />;
   }

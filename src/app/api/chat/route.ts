@@ -1,13 +1,13 @@
 import {
   openRouterConfigured,
-  replayEntry,
+  replayCanned,
   runAgent,
   systemPromptTokens,
   type ServerEvent,
   type Turn,
 } from '@/features/chat/agent';
 import { overBudget, rateLimited, recordSpend } from '@/features/chat/guards';
-import { entryFor, getKnowledge } from '@/features/chat/knowledge';
+import { cannedFor, getKnowledge } from '@/features/chat/knowledge';
 import { CHAT_BUDGET, estimateTokens, NYTHOS } from '@/features/chat/nythos';
 
 export const maxDuration = 30;
@@ -96,8 +96,8 @@ export async function POST(request: Request) {
 
   return sse(async (send) => {
     if (rateLimited(clientKey(request))) return send({ type: 'canned', id: 'slow-down' });
-    const entry = entryFor(await getKnowledge(), turns.at(-1)!.content);
-    if (entry) return replayEntry(entry, turns.slice(0, -1), send, request.signal);
+    const canned = cannedFor(await getKnowledge(), turns.at(-1)!.content);
+    if (canned) return replayCanned(canned, turns.slice(0, -1), send, request.signal);
     if (overBudget()) return send({ type: 'canned', id: 'out-of-tokens' });
     if (!openRouterConfigured()) return send({ type: 'canned', id: 'offline' });
 
