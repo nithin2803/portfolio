@@ -71,14 +71,18 @@ UI and the code the model is called nythos-6: GLM-5.3 Flash through OpenRouter, 
 
 - A request clears cheap checks before any model call, in this order: rate limit, an answer that can be served
   without the model (canned or replayed), the daily spend ceiling, the API key being set, the context fitting.
-  The checks are in `route.ts`; their limits are `CHAT_BUDGET` in `chat/nythos.ts`.
-- The agent (`chat/agent`) runs the model with three tools: list posts, read a post, get contact links.
+  The checks are in `route.ts`. The spend ceiling is `CHAT_BUDGET` in `chat/nythos.ts`; the rate limits are the
+  constants at the top of `chat/guards.ts`.
+- The agent (`chat/agent`) runs the model with its tools: list posts, read a post, get contact links, and
+  `read_more` for the `me.md` facets held back behind `<!-- more -->`.
 - The model replies in JSON held to `replySchema` (`agent/reply.ts`) by the host, so only hosts that enforce
-  it are used: `refused`, `sources`, `messages`, `followUps`. `ReplyStream` streams the messages to the visitor
+  it are used: `refused`, `sources`, `messages`, `about`, `actions`, `followUps`. `ReplyStream` streams the messages to the visitor
   as they're written and nothing else. `agent/prompt.ts` explains the fields and `reply.ts` defines and parses
   them: change them together.
-- Rate limits and spend live in memory (`chat/guards.ts`). Each server instance counts on its own, so on a
-  serverless host the limits and the spend ceiling are per instance, not global.
+- Rate limits (a token bucket per visitor) and the day's spend live in Upstash Redis (`chat/guards.ts`, over
+  `lib/redis.ts`), so every server instance shares them. One pipelined round trip answers both per message, and
+  the spend is recorded with `after()` once the answer has streamed. Without Redis configured, or while it's
+  failing, each instance falls back to counting in its own memory.
 
 ## Invariants
 

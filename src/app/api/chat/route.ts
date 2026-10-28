@@ -6,7 +6,8 @@ import {
   type ServerEvent,
   type Turn,
 } from '@/features/chat/agent';
-import { overBudget, rateLimited, recordSpend } from '@/features/chat/guards';
+import { after } from 'next/server';
+import { admit, recordSpend } from '@/features/chat/guards';
 import { cannedFor, getKnowledge } from '@/features/chat/knowledge';
 import { CHAT_BUDGET, estimateTokens, NYTHOS } from '@/features/chat/nythos';
 
@@ -115,11 +116,16 @@ export async function POST(request: Request) {
   const turns = parseHistory(raw);
   if (!turns) return badRequest();
 
+  // what the answer cost, added to the shared budget once it has streamed, so no visitor waits on it
+  let spent = 0;
+  after(() => recordSpend(spent));
+
   return sse(async (send) => {
-    if (rateLimited(clientKey(request))) return send({ type: 'canned', id: 'slow-down' });
-    const canned = cannedFor(await getKnowledge(), turns.at(-1)!.content);
+    const [admission, k] = await Promise.all([admit(clientKey(request)), getKnowledge()]);
+    if (admission.limited) return send({ type: 'canned', id: 'slow-down' });
+    const canned = cannedFor(k, turns.at(-1)!.content);
     if (canned) return replayCanned(canned, turns.slice(0, -1), send, request.signal);
-    if (overBudget()) return send({ type: 'canned', id: 'out-of-tokens' });
+    if (admission.overBudget) return send({ type: 'canned', id: 'out-of-tokens' });
     if (!openRouterConfigured()) return send({ type: 'canned', id: 'offline' });
 
     const historyTokens = turns.reduce((n, t) => n + estimateTokens(t.content), 0);
@@ -130,7 +136,7 @@ export async function POST(request: Request) {
     await runAgent(
       turns,
       (event) => {
-        if (event.type === 'done') recordSpend(event.costUsd);
+        if (event.type === 'done') spent = event.costUsd;
         send(event);
       },
       request.signal,
